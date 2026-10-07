@@ -1,0 +1,451 @@
+# 1. Header & System Persona Role
+
+You are an expert AI Principal Full-Stack Engineer, Product Architect, and Agricultural Sustainability Domain Expert. Your task is to build **AgriCycle AI**, a production-grade full-stack application. You write clean, modular, and exceptionally well-documented code. You do not use placeholders, skip steps, or leave incomplete logic. You think deeply about system architecture, data flow, and UI/UX before generating code.
+
+# 2. Core Mission Directive
+
+Build an intelligent agricultural sustainability ecosystem that connects the entire lifecycle:
+Consumer Demand → AI Demand Forecasting → Production Planning → Smart Irrigation → Harvest Prediction → Freshness Prediction → Marketplace → Consumer.
+
+The central principle is: Produce the right amount, use the right amount of water, harvest at the right time, and sell the produce while it is still fresh. The entire application must feel like one connected intelligence system, continuously learning and optimizing.
+
+# 3. Product Goal
+
+Use data and AI to align food demand, agricultural production, water usage, and consumption while reducing avoidable food waste and improving farmer value. Provide a holistic solution replacing fragmented agricultural tools with a single, AI-orchestrated lifecycle manager.
+
+# 4. Mandatory Features
+
+* **Role-Based Access:** Distinct portals for Farmers, Consumers, and Admins.
+* **AI Demand Forecasting:** Predict expected demand, trends, and suggested production quantities based on historical data and consumer preferences.
+* **Production Planning AI:** Recommend crops, quantities, and planting schedules based on demand forecasts, farm size, and soil climate.
+* **Smart Irrigation AI:** Weather, soil, and crop-aware irrigation decision engine calculating exact water needs with explainability.
+* **Harvest & Freshness Prediction AI:** Estimate maturity, harvest dates, freshness scores, and remaining shelf life.
+* **Surplus & Food Waste Prevention:** Detect surplus risk by comparing expected production vs demand, recommending dynamic discounts or alternative buyers.
+* **Farm-to-Consumer Marketplace:** Pre-orders, live inventory, freshness scores, cart, and checkout.
+* **Sustainability Dashboards:** Real-time metrics on water saved, food waste avoided, and revenue generated.
+* **AI Chat Assistant:** Agronomist/botanist chatbot for farmers to ask domain-specific questions.
+* **Mock IoT Integration:** Seed script to simulate ESP32 soil moisture, temperature, and humidity sensor data streams.
+
+# 5. Technology Requirements
+
+You MUST strictly use the following technology stack. Do not deviate or substitute.
+
+* **Frontend:** React.js (Vite), TypeScript, Tailwind CSS, Lucide React (icons), Recharts (data visualization).
+* **Backend:** Node.js, Express.js.
+* **Database:** PostgreSQL.
+* **Database ORM/Query Builder:** Prisma or standard `pg` pool (provide raw SQL schema as requested).
+* **AI SDK:** `@google/genai` (Google's latest GenAI SDK).
+* **Validation:** Zod (for both frontend forms and backend API payload validation).
+* **Authentication:** JWT (JSON Web Tokens) with `bcrypt` for password hashing.
+
+# 6. Application Pages (Routes)
+
+* **Public:**
+* `/` - Landing page explaining the ecosystem vision.
+* `/login` - Multi-role login.
+* `/register` - Multi-role registration (Farmer/Consumer).
+
+
+* **Farmer Portal:**
+* `/farmer/dashboard` - Main overview (weather, irrigation alerts, daily tasks, surplus warnings).
+* `/farmer/farm` - Manage farm details, fields, and soil data.
+* `/farmer/crops` - Track crop cycles, growth stages, and harvest predictions.
+* `/farmer/planning` - AI production planning and demand forecasting.
+* `/farmer/marketplace` - Manage produce listings, view sales, and apply surplus discounts.
+* `/farmer/sustainability` - Metrics on water optimized and waste prevented.
+* `/farmer/assistant` - AI Agronomist Chatbot.
+
+
+* **Consumer Portal:**
+* `/consumer/dashboard` - Recommended local produce, freshness highlights, upcoming harvests.
+* `/consumer/marketplace` - Browse, search, filter by freshness score and location.
+* `/consumer/orders` - Track orders and manage pre-orders.
+
+
+* **Admin Portal:**
+* `/admin/dashboard` - System health, platform-wide sustainability stats, user and transaction monitoring.
+
+
+
+# 7. User Flow
+
+1. **Consumer** expresses future demand or pre-orders in the marketplace.
+2. **AI Engine** aggregates historical data, market trends, and live consumer demand.
+3. **Farmer** queries the Production Planner AI, which recommends planting specific crops and quantities based on the demand forecast, soil, and water availability.
+4. **Farmer** logs the planted crop and field details.
+5. **Smart Irrigation AI** continuously monitors mock sensor data and weather forecasts, alerting the farmer to irrigate, delay (if rain expected), or skip.
+6. **Harvest AI** analyzes planting dates and weather to alert the farmer when the crop is nearing maturity.
+7. **Farmer** harvests and logs the actual yield.
+8. **Freshness AI** calculates an initial freshness score and remaining shelf-life, automatically pushing the listing to the Marketplace.
+9. **Surplus AI** monitors sales pace against degrading freshness; if surplus risk is detected, it advises the farmer to apply automated discounts or flags bulk buyers.
+10. **Consumer** buys the fresh produce. The cycle completes and data feeds back into the forecasting engine.
+
+# 8. Target Domains & Categorization
+
+* **Primary Domain:** Agricultural Technology (AgTech).
+* **Secondary Domains:** Sustainability, E-commerce / Supply Chain, AI / Machine Learning, IoT Data Processing.
+* **Categorization Tags:** Smart Farming, Water Conservation, Food Waste Reduction, Predictive Analytics, Precision Agriculture.
+
+# 9. Form & Advisory Configuration
+
+* **Farm & Field Setup Form:** Farm Name, Location (Lat/Lng), Field ID, Size (acres), Default Soil Type, Irrigation Method.
+* **Crop Planning Form:** Target Crop, Planned Plant Date, Historical Yield Data, Farmer Preferences.
+* **Crop Cycle Entry Form:** Field ID, Crop Type, Actual Planted Date, Expected Duration, Current Growth Stage, Manual Soil Moisture Override.
+* **Irrigation Action Form:** Acknowledge AI recommendation ("Irrigate Now" / "Delay"), record actual water used (Liters), note weather overrides.
+* **Marketplace Listing Form:** Auto-filled by Harvest AI, requires price confirmation, packaging info, and surplus discount strategy opt-in.
+
+# 10. Database Schema (Production SQL for PostgreSQL)
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    role VARCHAR(20) NOT NULL CHECK (role IN ('FARMER', 'CONSUMER', 'ADMIN')),
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE farms (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    farmer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    location_lat DECIMAL(10, 8),
+    location_lng DECIMAL(11, 8),
+    total_area_acres DECIMAL(10, 2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE fields (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    farm_id UUID REFERENCES farms(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    size_acres DECIMAL(10, 2) NOT NULL,
+    soil_type VARCHAR(100),
+    irrigation_method VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE crop_cycles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    field_id UUID REFERENCES fields(id) ON DELETE CASCADE,
+    crop_name VARCHAR(100) NOT NULL,
+    planted_date DATE NOT NULL,
+    expected_harvest_date DATE,
+    actual_harvest_date DATE,
+    growth_stage VARCHAR(50) DEFAULT 'SEEDLING',
+    status VARCHAR(50) DEFAULT 'GROWING' CHECK (status IN ('PLANNED', 'GROWING', 'HARVESTED', 'FAILED')),
+    water_used_liters DECIMAL(12, 2) DEFAULT 0,
+    estimated_optimal_water_liters DECIMAL(12, 2) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sensor_readings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    field_id UUID REFERENCES fields(id) ON DELETE CASCADE,
+    soil_moisture DECIMAL(5, 2),
+    temperature DECIMAL(5, 2),
+    humidity DECIMAL(5, 2),
+    rain_probability DECIMAL(5, 2),
+    reading_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE products (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    crop_cycle_id UUID REFERENCES crop_cycles(id) ON DELETE CASCADE,
+    farmer_id UUID REFERENCES users(id),
+    name VARCHAR(255) NOT NULL,
+    quantity_kg DECIMAL(10, 2) NOT NULL,
+    price_per_kg DECIMAL(10, 2) NOT NULL,
+    harvest_date DATE NOT NULL,
+    freshness_score INTEGER CHECK (freshness_score >= 0 AND freshness_score <= 100),
+    estimated_days_remaining INTEGER,
+    status VARCHAR(50) DEFAULT 'AVAILABLE' CHECK (status IN ('AVAILABLE', 'SOLD_OUT', 'SPOILED', 'DISCOUNTED')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    consumer_id UUID REFERENCES users(id),
+    total_amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PAID', 'DELIVERED', 'CANCELLED')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id),
+    quantity_kg DECIMAL(10, 2) NOT NULL,
+    price_at_time DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE surplus_alerts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+    alert_message TEXT NOT NULL,
+    recommended_discount_percent INTEGER,
+    status VARCHAR(50) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'RESOLVED', 'IGNORED')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+```
+
+# 11. Row Level Security (RLS) / Data Isolation Rules
+
+Implement data isolation at the Express API routing level via middleware.
+
+* **Farmers:** Route `GET /api/farms` MUST filter by `req.user.id`. Farmers cannot query or modify farms, fields, crop cycles, or sensor readings belonging to others. Products created must enforce `farmer_id === req.user.id`.
+* **Consumers:** Can view all active `products` (status IN ('AVAILABLE', 'DISCOUNTED')). Can only view their own `orders` and `order_items`.
+* **Admins:** Have unrestricted `SELECT` access to all tables for dashboard aggregations, but modifications require explicit admin endpoints.
+
+# 12. Backend API Routes
+
+* **Auth:**
+* `POST /api/auth/register`
+* `POST /api/auth/login`
+* `GET /api/auth/me`
+
+
+* **Farm Management:**
+* `GET/POST /api/farms`
+* `GET/POST /api/fields`
+* `GET/POST /api/crops`
+* `PATCH /api/crops/:id/harvest`
+
+
+* **AI Integration (GenAI SDK):**
+* `POST /api/ai/demand-forecast` - Triggers Demand Agent.
+* `POST /api/ai/production-plan` - Triggers Planning Agent.
+* `POST /api/ai/irrigation-decision` - Triggers Smart Irrigation Agent.
+* `POST /api/ai/harvest-predict` - Triggers Harvest Readiness Agent.
+* `POST /api/ai/freshness-predict` - Triggers Freshness Agent.
+* `POST /api/ai/surplus-detect` - Triggers Waste Prevention Agent.
+* `POST /api/ai/chat` - Farmer AI Assistant.
+
+
+* **Marketplace:**
+* `GET /api/products` (with filters for consumers, including freshness and location)
+* `POST /api/products` (for farmers)
+* `POST /api/orders`
+
+
+* **Sensors/IoT:**
+* `POST /api/sensors/ingest` (Mock IoT endpoint for ESP32 payloads)
+
+
+* **Analytics:**
+* `GET /api/sustainability/metrics` (Water saved, waste avoided aggregated)
+
+
+
+# 13. Gemini SDK Setup & Server-Side Security
+
+Use the official `@google/genai` SDK. Never expose the API key to the React frontend. All AI calls must be routed through the Express backend.
+
+```javascript
+// backend/services/ai.service.js
+import { GoogleGenAI, Type } from '@google/genai';
+
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY is missing in environment variables.");
+}
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// Generic instantiation to be used by specific agent handlers
+export const generateStructuredResponse = async (prompt, schema) => {
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: schema,
+            temperature: 0.2, // Low temperature for deterministic, analytical output
+        }
+    });
+    return JSON.parse(response.text());
+};
+
+```
+
+# 14. AI System Prompt
+
+For the generalized orchestrator and chatbot agent, use this System Persona:
+`"You are AgriCycle AI, an expert agricultural ecosystem manager. You analyze soil data, weather forecasts, consumer demand, and crop biology to provide actionable, highly precise recommendations to farmers. You prioritize water conservation, food waste prevention, and farm profitability. Always provide a confidence score, the main reasons for your recommendation, and a clear suggested action. Do not claim laboratory-grade accuracy without physical sensors. Be concise, objective, and supportive."`
+
+# 15. Detailed AI Prompts (with required JSON Schemas)
+
+Define the `responseSchema` for `@google/genai` explicitly to enforce structured JSON.
+
+**Smart Irrigation Prompt:**
+*Context Variables:* Soil Moisture, Expected Rain, Crop Stage, Temp, Humidity, Soil Type.
+*Schema Definition:*
+
+```javascript
+const irrigationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        irrigation_required: { type: Type.BOOLEAN },
+        recommended_water_quantity_liters: { type: Type.NUMBER },
+        action: { type: Type.STRING, enum: ["IRRIGATE_NOW", "DELAY", "SKIP"] },
+        confidence_score: { type: Type.INTEGER },
+        explanation: { type: Type.STRING },
+        key_factors: { type: Type.ARRAY, items: { type: Type.STRING } }
+    },
+    required: ["irrigation_required", "action", "confidence_score", "explanation"]
+};
+
+```
+
+**Demand Forecasting Prompt:**
+*Context Variables:* Historical sales, Current market trends, Crop Type, Location, Season.
+*Schema Definition:*
+
+```javascript
+const demandSchema = {
+    type: Type.OBJECT,
+    properties: {
+        expected_demand_kg: { type: Type.NUMBER },
+        confidence_score: { type: Type.INTEGER },
+        trend: { type: Type.STRING, enum: ["INCREASING", "STABLE", "DECREASING"] },
+        suggested_production_kg: { type: Type.NUMBER },
+        reasoning: { type: Type.STRING }
+    },
+    required: ["expected_demand_kg", "confidence_score", "trend", "suggested_production_kg", "reasoning"]
+};
+
+```
+
+**Production Planning Prompt:**
+*Context Variables:* Farm Size, Soil Climate, Water Availability, Forecasted Demand, Crop Duration.
+*Schema Definition:*
+
+```javascript
+const planningSchema = {
+    type: Type.OBJECT,
+    properties: {
+        recommended_crop: { type: Type.STRING },
+        suggested_quantity_kg: { type: Type.NUMBER },
+        expected_water_requirement_liters: { type: Type.NUMBER },
+        surplus_risk_level: { type: Type.STRING, enum: ["LOW", "MEDIUM", "HIGH"] },
+        explanation: { type: Type.STRING }
+    },
+    required: ["recommended_crop", "suggested_quantity_kg", "expected_water_requirement_liters", "explanation"]
+};
+
+```
+
+**Freshness Prediction Prompt:**
+*Context Variables:* Harvest Date, Storage Temp, Humidity, Crop Type, Transportation Duration.
+*Schema Definition:*
+
+```javascript
+const freshnessSchema = {
+    type: Type.OBJECT,
+    properties: {
+        freshness_score: { type: Type.INTEGER, description: "Scale 0-100" },
+        estimated_days_remaining: { type: Type.INTEGER },
+        selling_urgency: { type: Type.STRING, enum: ["URGENT", "NORMAL", "LONG_LASTING"] },
+        storage_recommendation: { type: Type.STRING }
+    },
+    required: ["freshness_score", "estimated_days_remaining", "selling_urgency"]
+};
+
+```
+
+# 16. Zod Validation Requirements
+
+Implement Zod schemas in a shared `packages/validations` or replicated in both client/server to ensure strict type safety.
+
+* **UserAuthSchema:** `email` (string.email), `password` (string.min(8)), `role` (enum).
+* **FarmCreateSchema:** `name` (string.min(3)), `total_area_acres` (number.positive()).
+* **FieldCreateSchema:** `name` (string), `size_acres` (number.positive()), `soil_type` (string).
+* **CropCycleSchema:** `crop_name` (string), `planted_date` (date string), `expected_harvest_date` (date string).
+* **MarketplaceProductSchema:** `price_per_kg` (number.positive()), `quantity_kg` (number.positive()), `harvest_date` (date string).
+* **OrderSchema:** `items` (array of product UUIDs and quantities).
+
+# 17. Frontend Components List
+
+Use Tailwind CSS and Lucide React icons.
+
+* `Layouts/DashboardLayout.tsx` (Sidebar nav dynamically adjusting based on user role).
+* `UI/Card.tsx`, `UI/Button.tsx`, `UI/Badge.tsx`, `UI/Modal.tsx`, `UI/Progress.tsx`.
+* `Widgets/WeatherWidget.tsx` (Current temp, humidity, rain probability).
+* `Widgets/AIExplanationBox.tsx` (Displays AI reasoning, confidence %, and key factors in a clean card).
+* `Dashboard/IrrigationAlertCard.tsx` (Large dynamic CTA: "Irrigate Now", "Delay (Rain Expected)", "Skip").
+* `Dashboard/SustainabilityMetricsRow.tsx` (Data visualization for Water Saved vs Traditional, Waste Avoided).
+* `Marketplace/ProductCard.tsx` (Shows crop info, color-coded freshness score ring, estimated days remaining, price).
+* `Marketplace/SurplusAlertBadge.tsx` (Highlights discounted items near expiration for consumers, alerts farmers on their dashboard).
+
+# 18. Security Requirements
+
+* All API routes except `/api/auth/*` must be protected by a `verifyJWT` middleware.
+* Passwords must be hashed using `bcrypt` (salt rounds: 10) before inserting into PostgreSQL.
+* Never return password hashes in API responses.
+* Implement standard Express security middlewares: `cors`, `helmet`, and express rate-limit.
+* Input payloads must pass Zod validation in the router before controller execution.
+* Role-Based Access Control (RBAC) middleware to ensure consumers cannot access farmer POST endpoints.
+
+# 19. Environment Variables Template
+
+```env
+# Backend .env
+PORT=5000
+DATABASE_URL="postgresql://user:password@hostname:port/dbname?sslmode=require"
+JWT_SECRET="generate_a_secure_random_string_here"
+GEMINI_API_KEY="AIzaSy..."
+
+# Frontend .env
+VITE_API_URL="http://localhost:5000/api"
+
+```
+
+# 20. Suggested Folder Structure
+
+```text
+/agricycle-ai
+├── frontend/
+│   ├── src/
+│   │   ├── api/          # Axios instances and API wrappers
+│   │   ├── components/   # Shared UI components & Widgets
+│   │   ├── pages/        # Role-based page views (Farmer, Consumer, Admin)
+│   │   ├── hooks/        # Custom React hooks (e.g., useAuth, useAI)
+│   │   ├── utils/        # Zod schemas, formatters
+│   │   └── App.tsx       # Router configuration
+├── backend/
+│   ├── src/
+│   │   ├── controllers/  # Route logic
+│   │   ├── middlewares/  # Auth, RBAC, Error Handling, Validation
+│   │   ├── routes/       # Express routers
+│   │   ├── services/     # AI SDK integration, Database queries
+│   │   ├── config/       # DB connection (pg)
+│   │   └── index.js      # Express app entry
+└── README.md
+
+```
+
+# 21. Implementation Phases
+
+* **Phase 1: Foundation.** Setup monorepo/folder structure, Express + Postgres DB connection, run raw SQL schemas, implement JWT Auth + RBAC middleware.
+* **Phase 2: Core Farm Logic.** Build API and UI for Farmers to create Farms, Fields, and log Crop Cycles. Build basic Dashboard layout.
+* **Phase 3: AI Intelligence Engine.** Integrate `@google/genai`. Create the orchestration layer for the 6 core AI services (Demand, Planning, Irrigation, Harvest, Freshness, Surplus). Build the mock IoT data ingestion endpoint to feed the Irrigation AI.
+* **Phase 4: Marketplace & Consumers.** Build Consumer browsing UI, Farmer product listing, order processing logic, and Freshness/Surplus dynamic pricing mechanics.
+* **Phase 5: Analytics & Polish.** Build the Sustainability Dashboard (Recharts for water saved/waste avoided). Finalize the Farmer AI Chatbot. Apply final Tailwind UI polish.
+
+# 22. Acceptance Criteria
+
+* A user can register as a Farmer, create a 10-acre farm, add a field, and input a crop plan.
+* The AI Planning engine successfully consumes the request and outputs a valid JSON recommendation using the `@google/genai` schema.
+* The Smart Irrigation system processes a mock sensor payload (e.g., high rain probability, adequate soil moisture) and outputs an explainable "DELAY" recommendation.
+* A harvested crop transitions to the Marketplace with an AI-generated freshness score (0-100).
+* A Consumer user can view the marketplace, filter by freshness score, and place an order.
+* The Surplus AI successfully flags at-risk inventory nearing expiration and recommends an automated discount to the Farmer.
+* The Sustainability dashboard accurately calculates and displays estimated water saved based on the differential between traditional baseline and AI-optimized usage.
+* The UI is entirely responsive, clean, and free of console errors.
+
+# 23. Final Instruction to Coding Agent
+
+Begin execution immediately. Start with **Phase 1: Foundation**. Output the complete file structure, initialize `package.json` for both frontend and backend, generate the raw SQL execution script, and write the complete Authentication (JWT/bcrypt) backend logic alongside the React Auth context. Do not stop until Phase 1 is fully coded and functional. I await your code.

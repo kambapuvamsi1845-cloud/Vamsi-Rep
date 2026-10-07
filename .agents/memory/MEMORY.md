@@ -1,0 +1,1 @@
+- [Workspace package installation](workspace-package-installation.md) — target monorepo dependencies with pnpm's workspace filter when the package helper cannot scope them.
